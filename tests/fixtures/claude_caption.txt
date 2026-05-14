@@ -1,0 +1,9 @@
+Built a two-stage Attention U-Net pipeline for AFM height-map reconstruction that hit 97.1% median recovery and 0.77 nm MAE — a 75 percentage-point jump over the baseline.
+
+The interesting bit wasn't the architecture, it was the loss: a custom AFMLoss combining L1, standard-deviation, and range terms.
+
+Plain MSE pushed the network to wash out the fine surface texture. Adding the Std + Range terms forced it to match both the magnitude AND the variability of the true height map, which is what materials researchers actually care about.
+
+Lesson: when your metric and your loss diverge, the loss wins. Time spent designing the loss is rarely wasted.
+
+What's the most surprising loss function you've ever shipped?
