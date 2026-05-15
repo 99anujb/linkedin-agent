@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -47,7 +47,7 @@ def test_schedule_update_posts_correct_payload() -> None:
             json={"success": True, "updates": [{"id": "u123"}]},
         )
     )
-    when = datetime(2026, 5, 16, 15, 0, tzinfo=timezone.utc)
+    when = datetime(2026, 5, 16, 15, 0, tzinfo=UTC)
     update_id = schedule_update(
         access_token="tkn",
         profile_id="p1",
@@ -68,7 +68,7 @@ def test_schedule_update_buffer_error_raises() -> None:
     respx.post("https://api.bufferapp.com/1/updates/create.json").mock(
         return_value=httpx.Response(403, json={"error": "rate limited"})
     )
-    when = datetime(2026, 5, 16, 15, 0, tzinfo=timezone.utc)
+    when = datetime(2026, 5, 16, 15, 0, tzinfo=UTC)
     with pytest.raises(BufferError, match="403"):
         schedule_update(
             access_token="tkn",

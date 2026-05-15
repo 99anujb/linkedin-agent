@@ -80,4 +80,4 @@ def schedule_update(
     updates = body.get("updates") or []
     if not updates:
         raise BufferError(f"no updates returned: {body}")
-    return updates[0]["id"]
+    return str(updates[0]["id"])

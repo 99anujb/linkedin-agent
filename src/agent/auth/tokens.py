@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hmac
 import time
 from hashlib import sha256
@@ -41,7 +42,7 @@ def verify_token(token: str, *, secret: str) -> tuple[str, str]:
         payload_b64, sig_b64 = token.split(".", 1)
         payload = _b64decode(payload_b64)
         sig = _b64decode(sig_b64)
-    except (ValueError, base64.binascii.Error) as e:
+    except (ValueError, binascii.Error) as e:
         raise TokenError(f"malformed token: {e}") from e
 
     expected = hmac.new(secret.encode(), payload, sha256).digest()

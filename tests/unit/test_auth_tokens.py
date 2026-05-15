@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import time
-
 import pytest
 from freezegun import freeze_time
 
 from agent.auth.tokens import TokenError, sign_token, verify_token
-
 
 SECRET = "test-secret-32-bytes-aaaaaaaaaaaaaaaa"
 
@@ -36,9 +33,8 @@ def test_wrong_secret_rejected() -> None:
 def test_expired_token_rejected() -> None:
     with freeze_time("2026-05-15T12:00:00Z"):
         tok = sign_token("d", "approve", ttl_seconds=60, secret=SECRET)
-    with freeze_time("2026-05-15T12:01:01Z"):
-        with pytest.raises(TokenError, match="expired"):
-            verify_token(tok, secret=SECRET)
+    with freeze_time("2026-05-15T12:01:01Z"), pytest.raises(TokenError, match="expired"):
+        verify_token(tok, secret=SECRET)
 
 
 def test_invalid_action_rejected() -> None:
