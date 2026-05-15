@@ -11,6 +11,7 @@ from agent.config import load_settings
 from agent.db.store import init_db, list_pending, update_draft_status
 from agent.draft import run_draft
 from agent.logging_setup import setup_logging
+from agent.post import run_post
 
 
 def _cmd_draft(args: argparse.Namespace) -> int:
@@ -26,6 +27,17 @@ def _cmd_draft(args: argparse.Namespace) -> int:
     )
     print(f"status={result.status} post_type={result.post_type} draft_id={result.draft_id}")
     return 0 if result.status in ("drafted", "skipped", "dry_run") else 1
+
+
+def _cmd_post(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    setup_logging(settings.log_level)
+    result = run_post(settings, draft_id=args.draft_id, action=args.action)
+    print(
+        f"status={result.status} draft_id={result.draft_id} "
+        f"buffer_post_id={result.buffer_post_id} message={result.message}"
+    )
+    return 0 if result.status in ("posted", "rejected", "noop") else 1
 
 
 def _cmd_db_list_pending(_: argparse.Namespace) -> int:
@@ -61,6 +73,11 @@ def build_parser() -> argparse.ArgumentParser:
     draft.add_argument("--force", action="store_true")
     draft.add_argument("--post-type", choices=["project", "concept", "career"])
     draft.set_defaults(func=_cmd_draft)
+
+    post = sub.add_parser("post", help="Approve or reject a draft.")
+    post.add_argument("--draft-id", required=True)
+    post.add_argument("--action", required=True, choices=["approve", "reject"])
+    post.set_defaults(func=_cmd_post)
 
     db = sub.add_parser("db", help="Inspect the SQLite state.")
     db_sub = db.add_subparsers(dest="db_cmd", required=True)
