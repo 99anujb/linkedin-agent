@@ -146,9 +146,11 @@ def expire_stale_drafts(conn: sqlite3.Connection) -> int:
 
 
 def get_rotation_state(conn: sqlite3.Connection) -> RotationState:
-    row = conn.execute(
+    cur = conn.execute(
         "SELECT last_day, project_index, skill_index, exp_index FROM rotation_state WHERE id = 1"
-    ).fetchone()
+    )
+    cur.row_factory = sqlite3.Row
+    row = cur.fetchone()
     return RotationState(
         last_day=row["last_day"],
         project_index=row["project_index"],
