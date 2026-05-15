@@ -34,10 +34,11 @@ def test_concept_source(profile: Profile) -> None:
     assert "machine_learning" in src.keywords or "XGBoost" in src.keywords
 
 
-def test_tip_source(profile: Profile) -> None:
-    src = build_source(RotationDecision("tip", "co_a"), profile)
-    assert "Co A" in src.body
-    assert src.source_ref == "tip:co_a"
+def test_career_source(profile: Profile) -> None:
+    src = build_source(RotationDecision("career", "achv_0"), profile)
+    assert "Won a competition" in src.body  # from sample fixture
+    assert src.source_ref.startswith("career:")
+    assert "career" in src.keywords
 
 
 def test_unknown_type_raises(profile: Profile) -> None:

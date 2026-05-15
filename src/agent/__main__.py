@@ -59,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     draft = sub.add_parser("draft", help="Generate today's draft.")
     draft.add_argument("--dry-run", action="store_true")
     draft.add_argument("--force", action="store_true")
-    draft.add_argument("--post-type", choices=["project", "concept", "tip"])
+    draft.add_argument("--post-type", choices=["project", "concept", "career"])
     draft.set_defaults(func=_cmd_draft)
 
     db = sub.add_parser("db", help="Inspect the SQLite state.")

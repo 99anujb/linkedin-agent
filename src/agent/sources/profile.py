@@ -49,15 +49,52 @@ def _concept_source(profile: Profile, sub_key: str | None) -> SourceContent:
     )
 
 
-def _tip_source(profile: Profile, sub_key: str | None) -> SourceContent:
-    exp = next((e for e in profile.experience if e.id == sub_key), profile.experience[0])
-    bullets = exp.bullets.get("data_analyst") or next(iter(exp.bullets.values()))
-    body = f"Role: {exp.title} @ {exp.company} ({exp.start} - {exp.end}). " + " ".join(bullets)
+def _career_source(profile: Profile, sub_key: str | None) -> SourceContent:
+    """Build source content from achievements + education + degree pivot."""
+    if not profile.achievements:
+        # Fallback: use education only.
+        edu = profile.education[0] if profile.education else None
+        title = f"{edu.degree} @ {edu.school}" if edu else "My career journey"
+        body = (
+            f"Pursuing {edu.degree} ({edu.start} - {edu.end}, GPA {edu.gpa}). "
+            f"Coursework: {', '.join(edu.coursework)}."
+            if edu
+            else "Sharing a moment from my career journey."
+        )
+        return SourceContent(
+            title=title,
+            body=body,
+            keywords=["career", "data science", "graduate school"],
+            source_ref="career:education",
+        )
+
+    # Pick achievement by sub_key (format "achv_<idx>"), else first.
+    idx = 0
+    if sub_key and sub_key.startswith("achv_"):
+        try:
+            idx = int(sub_key.split("_", 1)[1])
+        except ValueError:
+            idx = 0
+    idx = idx % len(profile.achievements)
+    achievement = profile.achievements[idx]
+
+    # Append supporting context: current degree + the Mech-Eng → DS pivot.
+    edu_lines: list[str] = []
+    for edu in profile.education:
+        edu_lines.append(f"{edu.degree} at {edu.school} ({edu.start} - {edu.end})")
+    edu_context = " | ".join(edu_lines) if edu_lines else ""
+
+    body = (
+        f"Achievement to highlight: {achievement}\n\n"
+        f"Supporting context (use only if relevant): {edu_context}\n\n"
+        f"Pivot story (use only if it adds depth): I trained as a Mechanical Engineer "
+        f"(B.Tech) and pivoted into data science via the MS program at UMass Dartmouth."
+    )
     return SourceContent(
-        title=f"{exp.title} @ {exp.company}",
+        title="Career milestone",
         body=body,
-        keywords=[exp.company, exp.title, "growth analytics", "EdTech"],
-        source_ref=f"tip:{exp.id}",
+        keywords=["career", "data science", "graduate school", "career pivot"],
+        source_ref=f"career:{sub_key or f'achv_{idx}'}",
     )
 
 
@@ -66,6 +103,6 @@ def build_source(decision: RotationDecision, profile: Profile) -> SourceContent:
         return _project_source(profile, decision.sub_key)
     if decision.post_type == "concept":
         return _concept_source(profile, decision.sub_key)
-    if decision.post_type == "tip":
-        return _tip_source(profile, decision.sub_key)
+    if decision.post_type == "career":
+        return _career_source(profile, decision.sub_key)
     raise ValueError(f"Unsupported post type: {decision.post_type}")

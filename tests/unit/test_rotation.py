@@ -33,10 +33,10 @@ def test_pick_today_cycles_through_types(tmp_db: sqlite3.Connection, profile: Pr
     assert decision is not None
     assert decision.post_type == "concept"
 
-    # Wed → tip
+    # Wed → career
     decision = pick_today(tmp_db, profile, today=date(2026, 5, 13))
     assert decision is not None
-    assert decision.post_type == "tip"
+    assert decision.post_type == "career"
 
     # Thu → project again (3-day cycle in phase 1)
     decision = pick_today(tmp_db, profile, today=date(2026, 5, 14))
@@ -93,4 +93,4 @@ def test_already_drafted_today(tmp_db: sqlite3.Connection) -> None:
 
 
 def test_phase1_types_constant() -> None:
-    assert PHASE1_TYPES == ("project", "concept", "tip")
+    assert PHASE1_TYPES == ("project", "concept", "career")

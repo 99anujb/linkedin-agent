@@ -19,7 +19,11 @@ Voice for Anuj Bansal's LinkedIn:
   -> soft CTA (1 line, a question or invite).
 - Length: 800-1300 characters total.
 - Do NOT include tags inline; they are appended separately after the caption.
-- Do NOT include URLs in the caption body."""
+- Do NOT include URLs in the caption body.
+- Do NOT mention past employer names (e.g. Scaler Academy, Unacademy, Vedantu) or
+  past job titles from previous employment. Frame work-experience lessons in
+  generic terms ("in a prior analytics role", "at a previous company") only if
+  unavoidable, and never name a specific past employer."""
 
 
 _TYPE_INSTRUCTIONS = {
@@ -34,10 +38,12 @@ _TYPE_INSTRUCTIONS = {
         "skill category and explain it in plain language with a tiny concrete "
         "example. End by asking how others apply it."
     ),
-    "tip": (
-        "Write a tip/insight post. Share ONE concrete lesson from the supplied "
-        "experience bullets. State the situation, the move, the outcome (with "
-        "metric). End with a one-line takeaway and a question."
+    "career": (
+        "Write a career-journey or achievement post. Lead with the milestone "
+        "(award, degree, pivot moment) or a vivid scene from the journey. "
+        "Explain what it meant, what you learned, and what it points toward. "
+        "Do NOT name past employers. End with a question that invites the "
+        "reader to share their own pivot or milestone."
     ),
 }
 

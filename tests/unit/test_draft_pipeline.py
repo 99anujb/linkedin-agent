@@ -63,18 +63,18 @@ def test_run_draft_happy_path(settings: Settings) -> None:
         anthropic_client=anthropic,
         image_fn=image_fn,
         email_send_fn=send_fn,
-        today=date(2026, 5, 13),  # Wed → tip
+        today=date(2026, 5, 13),  # Wed → career
     )
     assert isinstance(result, DraftResult)
     assert result.status == "drafted"
-    assert result.post_type == "tip"
+    assert result.post_type == "career"
 
     conn = sqlite3.connect(settings.db_path)
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT * FROM drafts WHERE id = ?", (result.draft_id,)).fetchone()
     assert row is not None
     assert row["status"] == "pending"
-    assert row["post_type"] == "tip"
+    assert row["post_type"] == "career"
     rs = get_rotation_state(conn)
     assert rs.last_day == "2026-05-13"
     assert rs.exp_index == 1
