@@ -123,6 +123,8 @@ def run_draft(
             draft=draft,
             sender=settings.gmail_username,
             recipient=settings.gmail_recipient,
+            approve_url="https://placeholder/approve",  # TEMP — Task 5 wires real tokens
+            reject_url="https://placeholder/reject",     # TEMP — Task 5 wires real tokens
         )
         email_send_fn(msg)
 
