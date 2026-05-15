@@ -1,0 +1,57 @@
+name: draft
+on:
+  schedule:
+    - cron: "0 12 * * *"   # 12:00 UTC daily ≈ 08:00 ET (DST)
+  workflow_dispatch:
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pip install -e .
+
+      - name: Decode profile from secret
+        env:
+          PROFILE_B64: ${{ secrets.PROFILE_B64 }}
+        run: |
+          if [ -z "$PROFILE_B64" ]; then
+            echo "PROFILE_B64 secret missing"; exit 1
+          fi
+          echo "$PROFILE_B64" | base64 -d > master_profile.json
+
+      - name: Run draft
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
+          PROFILE_PATH: ./master_profile.json
+          DB_PATH: ./db/state.sqlite
+          LOG_LEVEL: INFO
+        run: python -m agent draft
+
+      - name: Wipe decoded profile (defense in depth)
+        if: always()
+        run: rm -f master_profile.json
+
+      - name: Commit updated state DB
+        run: |
+          git config user.name "linkedin-agent"
+          git config user.email "noreply@anthropic.com"
+          if git diff --quiet db/state.sqlite; then
+            echo "no DB changes to commit"
+          else
+            git add db/state.sqlite
+            git commit -m "chore(db): state after $(date -u +'%Y-%m-%dT%H:%MZ') draft"
+            git push
+          fi
