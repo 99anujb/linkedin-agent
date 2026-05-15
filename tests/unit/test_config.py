@@ -32,6 +32,8 @@ def test_load_settings_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_missing_required_var_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Prevent load_dotenv from re-populating from a local .env file.
+    monkeypatch.setattr("agent.config.load_dotenv", lambda *a, **kw: None)
     env = _full_env()
     env.pop("ANTHROPIC_API_KEY")
     for k in list(os.environ):
