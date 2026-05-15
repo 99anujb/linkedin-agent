@@ -28,6 +28,10 @@ def settings(tmp_path: Path, sample_profile_path: Path) -> Settings:
         profile_path=sample_profile_path,
         db_path=tmp_path / "state.sqlite",
         log_level="INFO",
+        buffer_access_token="btkn",
+        buffer_linkedin_profile_id="p1",
+        hmac_secret="secret-32-bytes-aaaaaaaaaaaaaaaa",
+        approval_base_url="https://approval.example.workers.dev",
     )
 
 
