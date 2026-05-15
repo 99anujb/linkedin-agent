@@ -84,6 +84,15 @@ def test_run_draft_happy_path(settings: Settings) -> None:
     assert rs.exp_index == 1
     conn.close()
 
+    # Verify email has real signed tokens (not placeholders)
+    sent_args = send_fn.call_args
+    sent_msg = sent_args.args[0] if sent_args.args else sent_args.kwargs.get("msg")
+    assert sent_msg is not None
+    html = sent_msg.get_body(preferencelist=("html",)).get_content()
+    assert "approval.example.workers.dev/a?t=" in html
+    assert "approval.example.workers.dev/r?t=" in html
+    assert "placeholder" not in html
+
     image_fn.assert_called_once()
     send_fn.assert_called_once()
 
