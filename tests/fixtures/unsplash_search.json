@@ -1,0 +1,17 @@
+{
+  "total": 1,
+  "total_pages": 1,
+  "results": [
+    {
+      "id": "abc123",
+      "urls": {
+        "raw": "https://images.unsplash.com/raw",
+        "full": "https://images.unsplash.com/full",
+        "regular": "https://images.unsplash.com/regular",
+        "small": "https://images.unsplash.com/small"
+      },
+      "links": {"html": "https://unsplash.com/photos/abc123"},
+      "user": {"name": "Jane Doe", "username": "janed"}
+    }
+  ]
+}

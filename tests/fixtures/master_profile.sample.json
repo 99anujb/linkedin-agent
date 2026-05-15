@@ -1,0 +1,106 @@
+{
+  "contact": {
+    "name": "Test User",
+    "tagline": "Open to work",
+    "phone": "(000) 000-0000",
+    "phone_tel": "+10000000000",
+    "email": "test@example.com",
+    "linkedin_label": "LinkedIn",
+    "linkedin_url": "https://www.linkedin.com/in/test/",
+    "github_label": "GitHub",
+    "github_url": "https://github.com/test",
+    "portfolio_label": "Portfolio",
+    "portfolio_url": "https://example.com"
+  },
+  "role_targets": ["Data Analyst", "Data Scientist"],
+  "constraints": {
+    "work_authorization": "OPT",
+    "needs_sponsorship_now": false,
+    "needs_sponsorship_future": true,
+    "visa_status": "OPT",
+    "opt_valid_through_years": 3,
+    "eligible_countries": ["United States"],
+    "eligible_locations": ["Remote-US"],
+    "open_to_relocation": true,
+    "current_location": "Boston, MA",
+    "preferred_locations": ["Anywhere"],
+    "earliest_start": "Immediately",
+    "experience_years": 4,
+    "highest_degree_in_progress": "MS Data Science",
+    "deal_breakers": []
+  },
+  "summaries": {
+    "business_analyst": "Test summary.",
+    "data_analyst": "Test summary.",
+    "data_scientist": "Test summary."
+  },
+  "skills": {
+    "programming": ["Python", "SQL"],
+    "machine_learning": ["XGBoost"],
+    "deep_learning": ["PyTorch"],
+    "interpretability": ["SHAP"],
+    "visualization_bi": ["Tableau"],
+    "databases_cloud": ["MySQL"],
+    "deployment_engineering": ["FastAPI"],
+    "analytics_techniques": ["A/B Testing"],
+    "business_strategy": ["GTM Strategy"],
+    "financial_planning": ["Forecasting"],
+    "tools_workflow": ["Jupyter"]
+  },
+  "experience": [
+    {
+      "id": "co_a",
+      "company": "Co A",
+      "location": "Boston",
+      "title": "Analyst",
+      "start": "Jan 2022",
+      "end": "Dec 2023",
+      "bullets": {
+        "business_analyst": ["Drove $1M outcome."],
+        "data_analyst": ["Built dashboards reducing latency 50%."],
+        "data_scientist": ["Built models with 90% accuracy."]
+      }
+    }
+  ],
+  "projects": [
+    {
+      "id": "p1",
+      "title": "Project One",
+      "subtitle": "Demo",
+      "tech": ["Python", "PyTorch"],
+      "github": "https://github.com/test/p1",
+      "domain": ["ml"],
+      "metrics": {"accuracy": "95%"},
+      "framings": {
+        "data_scientist": "Built a deep learning thing with 95% accuracy.",
+        "data_analyst": "Built a model.",
+        "business_analyst": "Built something."
+      }
+    },
+    {
+      "id": "p2",
+      "title": "Project Two",
+      "subtitle": null,
+      "tech": ["SQL"],
+      "github": "https://github.com/test/p2",
+      "domain": ["analytics"],
+      "metrics": {},
+      "framings": {
+        "data_scientist": "Did SQL analysis.",
+        "data_analyst": "Did SQL analysis.",
+        "business_analyst": "Did SQL analysis."
+      }
+    }
+  ],
+  "education": [
+    {
+      "school": "Test U",
+      "degree": "MS Data Science",
+      "gpa": "3.6",
+      "start": "Sep 2024",
+      "end": "May 2026",
+      "coursework": ["ML", "DL"]
+    }
+  ],
+  "achievements": ["Won a competition."]
+}
