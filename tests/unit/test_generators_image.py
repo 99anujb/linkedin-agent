@@ -4,11 +4,9 @@ import json
 from pathlib import Path
 
 import httpx
-import pytest
 import respx
 
 from agent.generators.image import FALLBACK_IMAGE_URL, ImageResult, fetch_image
-
 
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "unsplash_search.json"
 
@@ -19,9 +17,7 @@ def test_fetch_image_success() -> None:
     respx.get("https://api.unsplash.com/search/photos").mock(
         return_value=httpx.Response(200, json=body)
     )
-    result = fetch_image(
-        keywords=["data science", "ml"], access_key="test-key"
-    )
+    result = fetch_image(keywords=["data science", "ml"], access_key="test-key")
     assert isinstance(result, ImageResult)
     assert result.url == "https://images.unsplash.com/regular"
     assert "Jane Doe" in result.credit

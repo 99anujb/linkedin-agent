@@ -7,6 +7,7 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
+from email.message import EmailMessage
 from typing import Any
 
 from agent.config import Settings
@@ -44,9 +45,7 @@ def _default_image_fn(keywords: list[str], access_key: str) -> ImageResult:
     return fetch_image(keywords=keywords, access_key=access_key)
 
 
-def _default_email_send(
-    msg, *, username: str, password: str
-) -> None:
+def _default_email_send(msg: EmailMessage, *, username: str, password: str) -> None:
     send_email(msg, username=username, password=password)
 
 
@@ -114,9 +113,7 @@ def run_draft(
 
         if dry_run:
             log.info("DRY RUN — caption:\n%s\nhashtags: %s", caption, draft.hashtags)
-            return DraftResult(
-                status="dry_run", post_type=decision.post_type, draft_id=draft.id
-            )
+            return DraftResult(status="dry_run", post_type=decision.post_type, draft_id=draft.id)
 
         insert_draft(conn, draft)
         advance_after_draft(conn, decision)
@@ -129,8 +126,6 @@ def run_draft(
         )
         email_send_fn(msg)
 
-        return DraftResult(
-            status="drafted", post_type=decision.post_type, draft_id=draft.id
-        )
+        return DraftResult(status="drafted", post_type=decision.post_type, draft_id=draft.id)
     finally:
         conn.close()

@@ -52,7 +52,7 @@ def _concept_source(profile: Profile, sub_key: str | None) -> SourceContent:
 def _tip_source(profile: Profile, sub_key: str | None) -> SourceContent:
     exp = next((e for e in profile.experience if e.id == sub_key), profile.experience[0])
     bullets = exp.bullets.get("data_analyst") or next(iter(exp.bullets.values()))
-    body = f"Role: {exp.title} @ {exp.company} ({exp.start} – {exp.end}). " + " ".join(bullets)
+    body = f"Role: {exp.title} @ {exp.company} ({exp.start} - {exp.end}). " + " ".join(bullets)
     return SourceContent(
         title=f"{exp.title} @ {exp.company}",
         body=body,

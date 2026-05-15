@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -55,7 +56,7 @@ class EducationItem(BaseModel):
 class Profile(BaseModel):
     contact: Contact
     role_targets: list[str]
-    constraints: dict
+    constraints: dict[str, Any]
     summaries: dict[str, str]
     skills: dict[str, list[str]]
     experience: list[ExperienceItem]

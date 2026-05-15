@@ -36,7 +36,7 @@ def generate_hashtags(
     keywords: list[str],
     model: str = DEFAULT_MODEL,
 ) -> list[str]:
-    """Return 5–8 hashtags. Raises ValueError if Claude's response is unparseable."""
+    """Return 5-8 hashtags. Raises ValueError if Claude's response is unparseable."""
     messages = build_hashtag_messages(post_type, caption, keywords)
     log.info("Generating hashtags (model=%s)", model)
     resp = client.messages.create(model=model, max_tokens=MAX_TOKENS, messages=messages)

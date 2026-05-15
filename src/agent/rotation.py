@@ -6,7 +6,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import date
 
-from agent.db.store import get_rotation_state, update_rotation_state
+from agent.db.store import RotationState, get_rotation_state, update_rotation_state
 from agent.profile_model import Profile
 
 PHASE1_TYPES: tuple[str, ...] = ("project", "concept", "tip")
@@ -34,7 +34,7 @@ def _skill_categories(profile: Profile) -> list[str]:
     return list(profile.skills.keys())
 
 
-def _sub_key(post_type: str, profile: Profile, state) -> str | None:
+def _sub_key(post_type: str, profile: Profile, state: RotationState) -> str | None:
     if post_type == "project":
         if not profile.projects:
             return None

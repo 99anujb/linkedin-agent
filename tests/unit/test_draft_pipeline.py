@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -11,10 +10,8 @@ from freezegun import freeze_time
 
 from agent.config import Settings
 from agent.db.store import (
-    get_draft,
     get_rotation_state,
     init_db,
-    list_pending,
 )
 from agent.draft import DraftResult, run_draft
 from agent.generators.image import ImageResult
@@ -44,7 +41,9 @@ def _wire_fakes():
     block.text = "Hook.\n\nBody.\n\nQ?"
     anthropic.messages.create.side_effect = [
         MagicMock(content=[block]),
-        MagicMock(content=[type("B", (), {"type": "text", "text": '["#A","#B","#C","#D","#E"]'})()]),
+        MagicMock(
+            content=[type("B", (), {"type": "text", "text": '["#A","#B","#C","#D","#E"]'})()]
+        ),
     ]
     image_fn = MagicMock(return_value=ImageResult(url="http://img", credit="cred"))
     send_fn = MagicMock()

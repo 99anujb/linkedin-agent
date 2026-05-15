@@ -9,7 +9,6 @@ from typing import Any
 
 import pytest
 
-
 FIXTURES = Path(__file__).parent / "fixtures"
 
 

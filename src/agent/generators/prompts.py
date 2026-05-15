@@ -15,9 +15,9 @@ Voice for Anuj Bansal's LinkedIn:
 - Tone: thoughtful, grounded in real work. Avoid hype words ("revolutionary",
   "10x", "blown away"). Avoid emoji walls. One or two emoji at most, only if
   natural.
-- Structure: hook (1 line) → body (3–5 short paragraphs, blank lines between)
-  → soft CTA (1 line, a question or invite).
-- Length: 800–1300 characters total.
+- Structure: hook (1 line) -> body (3-5 short paragraphs, blank lines between)
+  -> soft CTA (1 line, a question or invite).
+- Length: 800-1300 characters total.
 - Do NOT include tags inline; they are appended separately after the caption.
 - Do NOT include URLs in the caption body."""
 
@@ -51,8 +51,9 @@ def build_caption_messages(
     instructions = _TYPE_INSTRUCTIONS[post_type]
     metrics_block = ""
     if source.metrics:
-        metrics_block = "\nMetrics from the source (use these exact numbers if you cite any):\n" + "\n".join(
-            f"- {k}: {v}" for k, v in source.metrics.items()
+        metrics_block = (
+            "\nMetrics from the source (use these exact numbers if you cite any):\n"
+            + "\n".join(f"- {k}: {v}" for k, v in source.metrics.items())
         )
     user = (
         f"Post type: {post_type}\n"
@@ -73,7 +74,7 @@ def build_hashtag_messages(
     caption: str,
     keywords: list[str],
 ) -> list[dict[str, str]]:
-    """Return messages to generate 5–8 hashtags as a JSON array of strings."""
+    """Return messages to generate 5-8 hashtags as a JSON array of strings."""
     user = (
         "Pick 5 to 8 LinkedIn hashtags for the post below.\n"
         "Rules:\n"

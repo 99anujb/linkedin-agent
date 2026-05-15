@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 import httpx
 
 FALLBACK_IMAGE_URL = (
-    "https://images.unsplash.com/photo-1551288049-bebda4e38f71"
-    "?w=1200&auto=format&fit=crop&q=80"
+    "https://images.unsplash.com/photo-1551288049-bebda4e38f71" "?w=1200&auto=format&fit=crop&q=80"
 )
 FALLBACK_CREDIT = "Photo: Unsplash (fallback stock)"
 UNSPLASH_SEARCH = "https://api.unsplash.com/search/photos"
@@ -23,7 +23,7 @@ class ImageResult:
     credit: str
 
 
-def _credit(user: dict, photo_link: str) -> str:
+def _credit(user: dict[str, Any], photo_link: str) -> str:
     name = user.get("name") or user.get("username") or "Unsplash photographer"
     return f"Photo by {name} on Unsplash ({photo_link})"
 

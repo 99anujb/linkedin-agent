@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from agent.delivery.email import build_draft_email, send_email
 from agent.db.store import Draft
+from agent.delivery.email import build_draft_email, send_email
 
 
 def _sample_draft() -> Draft:

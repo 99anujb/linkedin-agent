@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from importlib import resources
 from pathlib import Path
 
@@ -38,7 +38,7 @@ class RotationState:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _iso(dt: datetime) -> str:
@@ -108,9 +108,7 @@ def _row_to_draft(row: sqlite3.Row) -> Draft:
 
 
 def get_draft(conn: sqlite3.Connection, draft_id: str) -> Draft | None:
-    row = conn.execute(
-        f"SELECT {_DRAFT_COLS} FROM drafts WHERE id = ?", (draft_id,)
-    ).fetchone()
+    row = conn.execute(f"SELECT {_DRAFT_COLS} FROM drafts WHERE id = ?", (draft_id,)).fetchone()
     return _row_to_draft(row) if row else None
 
 
@@ -149,7 +147,7 @@ def get_rotation_state(conn: sqlite3.Connection) -> RotationState:
     cur = conn.execute(
         "SELECT last_day, project_index, skill_index, exp_index FROM rotation_state WHERE id = 1"
     )
-    cur.row_factory = sqlite3.Row
+    cur.row_factory = sqlite3.Row  # type: ignore[assignment]
     row = cur.fetchone()
     return RotationState(
         last_day=row["last_day"],

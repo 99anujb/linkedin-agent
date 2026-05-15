@@ -6,11 +6,6 @@ from datetime import date
 import pytest
 
 from agent.db.store import (
-    Draft,
-    RotationState,
-    get_rotation_state,
-    insert_draft,
-    update_draft_status,
     update_rotation_state,
 )
 from agent.profile_model import Profile, load_profile
@@ -56,20 +51,14 @@ def test_pick_today_returns_none_if_already_drafted(
     assert pick_today(tmp_db, profile, today=date(2026, 5, 13)) is None
 
 
-def test_pick_today_force_overrides_last_day(
-    tmp_db: sqlite3.Connection, profile: Profile
-) -> None:
+def test_pick_today_force_overrides_last_day(tmp_db: sqlite3.Connection, profile: Profile) -> None:
     update_rotation_state(tmp_db, last_day="2026-05-13")
     decision = pick_today(tmp_db, profile, today=date(2026, 5, 13), force=True)
     assert decision is not None
 
 
-def test_pick_today_with_explicit_post_type(
-    tmp_db: sqlite3.Connection, profile: Profile
-) -> None:
-    decision = pick_today(
-        tmp_db, profile, today=date(2026, 5, 13), override_post_type="project"
-    )
+def test_pick_today_with_explicit_post_type(tmp_db: sqlite3.Connection, profile: Profile) -> None:
+    decision = pick_today(tmp_db, profile, today=date(2026, 5, 13), override_post_type="project")
     assert decision is not None
     assert decision.post_type == "project"
 
