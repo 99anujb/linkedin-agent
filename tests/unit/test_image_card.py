@@ -43,3 +43,39 @@ def test_render_code_card_unknown_language_falls_back_to_text() -> None:
 
     png = render_code_card("hello world", language="klingon")
     assert png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_pick_and_render_uses_code_card_for_project() -> None:
+    from agent.generators.image_card import pick_and_render
+
+    png = pick_and_render(
+        post_type="project",
+        hook="Reduced false positives by 38%.",
+        snippet="SELECT id FROM orders;",
+        language="sql",
+    )
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_pick_and_render_uses_quote_card_for_career() -> None:
+    from agent.generators.image_card import pick_and_render
+
+    png = pick_and_render(
+        post_type="career",
+        hook="Three years ago I doubted I belonged in data.",
+        snippet=None,
+        language=None,
+    )
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_pick_and_render_falls_back_to_quote_when_snippet_empty() -> None:
+    from agent.generators.image_card import pick_and_render
+
+    png = pick_and_render(
+        post_type="project",
+        hook="My hook.",
+        snippet="",
+        language="sql",
+    )
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"

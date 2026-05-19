@@ -134,3 +134,22 @@ def render_code_card(snippet: str, *, language: str) -> bytes:
     buf = BytesIO()
     card.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
+
+
+_CODE_TYPES = frozenset({"project", "concept"})
+
+
+def pick_and_render(
+    *,
+    post_type: str,
+    hook: str,
+    snippet: str | None,
+    language: str | None,
+) -> bytes:
+    """Pick code or quote card based on post_type, with quote-card fallback."""
+    if post_type in _CODE_TYPES and snippet and language:
+        try:
+            return render_code_card(snippet, language=language)
+        except Exception:  # noqa: BLE001 - fall back to quote on any render error
+            log.warning("code card render failed; falling back to quote card")
+    return render_quote_card(hook)
