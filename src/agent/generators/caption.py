@@ -7,7 +7,7 @@ from typing import Any
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from agent.generators.prompts import build_caption_messages
+from agent.generators.prompts import build_caption_messages, parse_format_choice
 from agent.sources.profile import SourceContent
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -40,5 +40,8 @@ def generate_caption(
         max_tokens=MAX_TOKENS,
         messages=messages,
     )
-    text = "".join(block.text for block in resp.content if getattr(block, "type", None) == "text")
-    return text.strip()
+    raw = "".join(
+        block.text for block in resp.content if getattr(block, "type", None) == "text"
+    ).strip()
+    _fmt, caption = parse_format_choice(raw)
+    return caption

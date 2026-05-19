@@ -30,6 +30,7 @@ class Settings(BaseModel):
     approval_base_url: str = Field(min_length=1)
     post_local_timezone: str = "America/New_York"
     post_local_time: str = "11:00"  # HH:MM 24h
+    github_raw_base: str = "https://raw.githubusercontent.com/99anujb/linkedin-agent/main"
 
 
 _REQUIRED = (
@@ -67,4 +68,8 @@ def load_settings() -> Settings:
         approval_base_url=os.environ["APPROVAL_BASE_URL"],
         post_local_timezone=os.environ.get("POST_LOCAL_TIMEZONE", "America/New_York"),
         post_local_time=os.environ.get("POST_LOCAL_TIME", "11:00"),
+        github_raw_base=os.environ.get(
+            "GITHUB_RAW_BASE",
+            "https://raw.githubusercontent.com/99anujb/linkedin-agent/main",
+        ),
     )

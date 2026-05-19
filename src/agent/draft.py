@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 from email.message import EmailMessage
+from pathlib import Path
 from typing import Any
 
 from agent.auth.tokens import sign_token
@@ -20,9 +21,12 @@ from agent.db.store import (
     update_rotation_state,
 )
 from agent.delivery.email import build_draft_email, send_email
+from agent.delivery.git_publish import commit_and_push
 from agent.generators.caption import generate_caption
 from agent.generators.hashtags import format_hashtags, generate_hashtags
 from agent.generators.image import ImageResult, fetch_image
+from agent.generators.image_card import pick_and_render
+from agent.generators.snippet import generate_snippet
 from agent.profile_model import load_profile
 from agent.rotation import advance_after_draft, pick_today
 from agent.sources.profile import build_source
@@ -100,16 +104,52 @@ def run_draft(
             caption=caption,
             keywords=source.keywords,
         )
-        image = image_fn(keywords=source.keywords, access_key=settings.unsplash_access_key)
+
+        hook = "\n".join(caption.strip().splitlines()[:2])
+        snippet_text: str | None = None
+        snippet_language: str | None = None
+        if decision.post_type in ("project", "concept"):
+            try:
+                snippet_text, snippet_language = generate_snippet(
+                    anthropic_client,
+                    caption=caption,
+                    post_type=decision.post_type,
+                )
+            except Exception as exc:
+                log.warning("snippet generation failed: %s", exc)
+
+        draft_id = str(uuid.uuid4())
+        image_path = Path("db/images") / f"{draft_id}.png"
+        image_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            png = pick_and_render(
+                post_type=decision.post_type,
+                hook=hook,
+                snippet=snippet_text,
+                language=snippet_language,
+            )
+            image_path.write_bytes(png)
+            commit_and_push(
+                [image_path],
+                message=f"chore(image): card for draft {draft_id}",
+            )
+            raw_base = settings.github_raw_base.rstrip("/")
+            image_url = f"{raw_base}/db/images/{draft_id}.png"
+            image_credit = "Generated card"
+        except Exception as exc:
+            log.warning("card pipeline failed (%s); using Unsplash fallback", exc)
+            fallback = image_fn(keywords=source.keywords, access_key=settings.unsplash_access_key)
+            image_url = fallback.url
+            image_credit = fallback.credit
 
         draft = Draft(
-            id=str(uuid.uuid4()),
+            id=draft_id,
             post_type=decision.post_type,
             source_ref=source.source_ref,
             caption=caption,
             hashtags=format_hashtags(tags),
-            image_url=image.url,
-            image_credit=image.credit,
+            image_url=image_url,
+            image_credit=image_credit,
         )
 
         if dry_run:

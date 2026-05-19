@@ -38,16 +38,16 @@ def settings(tmp_path: Path, sample_profile_path: Path) -> Settings:
 def _wire_fakes():
     anthropic = MagicMock()
 
-    class _Block:
-        type = "text"
+    def _block(text: str):
+        return type("B", (), {"type": "text", "text": text})()
 
-    block = _Block()
-    block.text = "Hook.\n\nBody.\n\nQ?"
     anthropic.messages.create.side_effect = [
-        MagicMock(content=[block]),
-        MagicMock(
-            content=[type("B", (), {"type": "text", "text": '["#A","#B","#C","#D","#E"]'})()]
-        ),
+        # caption (with FORMAT label)
+        MagicMock(content=[_block("FORMAT: list\nCAPTION:\nHook.\n\nBody.\n\nQ?")]),
+        # hashtags
+        MagicMock(content=[_block('["#A","#B","#C","#D","#E"]')]),
+        # snippet (only used for project/concept post_type)
+        MagicMock(content=[_block("LANGUAGE: sql\nCODE:\nSELECT 1;")]),
     ]
     image_fn = MagicMock(return_value=ImageResult(url="http://img", credit="cred"))
     send_fn = MagicMock()
@@ -93,8 +93,13 @@ def test_run_draft_happy_path(settings: Settings) -> None:
     assert "approval.example.workers.dev/r?t=" in html
     assert "placeholder" not in html
 
-    image_fn.assert_called_once()
     send_fn.assert_called_once()
+
+    # New: image_url should point to the GitHub raw base, not Unsplash
+    assert row["image_url"].startswith(
+        "https://raw.githubusercontent.com/99anujb/linkedin-agent/main/db/images/"
+    )
+    assert row["image_url"].endswith(".png")
 
 
 @freeze_time("2026-05-13T12:00:00Z")
@@ -115,6 +120,30 @@ def test_run_draft_skips_when_already_drafted(settings: Settings) -> None:
     assert result.status == "skipped"
     anthropic.messages.create.assert_not_called()
     send_fn.assert_not_called()
+
+
+@freeze_time("2026-05-13T12:00:00Z")
+def test_run_draft_falls_back_to_unsplash_on_render_failure(
+    settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    init_db(settings.db_path).close()
+
+    def _boom(**_):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("agent.draft.pick_and_render", _boom)
+
+    anthropic, image_fn, send_fn = _wire_fakes()
+    result = run_draft(
+        settings,
+        anthropic_client=anthropic,
+        image_fn=image_fn,
+        email_send_fn=send_fn,
+        today=date(2026, 5, 13),
+    )
+    assert result.status == "drafted"
+    image_fn.assert_called_once()
 
 
 @freeze_time("2026-05-13T12:00:00Z")

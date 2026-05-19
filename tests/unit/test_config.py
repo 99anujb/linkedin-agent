@@ -87,3 +87,12 @@ def test_post_local_fields_default(monkeypatch: pytest.MonkeyPatch) -> None:
     s = load_settings()
     assert s.post_local_timezone == "America/New_York"
     assert s.post_local_time == "11:00"
+
+
+def test_settings_has_github_raw_base_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    env = _full_env()
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("GITHUB_RAW_BASE", raising=False)
+    s = load_settings()
+    assert s.github_raw_base == "https://raw.githubusercontent.com/99anujb/linkedin-agent/main"

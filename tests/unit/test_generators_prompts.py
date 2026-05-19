@@ -24,7 +24,7 @@ def test_caption_messages_contain_voice_and_source() -> None:
 
 def test_voice_guidelines_present() -> None:
     assert "metric" in VOICE_GUIDELINES.lower()
-    assert "hashtag" not in VOICE_GUIDELINES.lower()  # captions don't carry hashtags inline
+    assert "hashtags inline" in VOICE_GUIDELINES.lower()  # explicit no-inline rule
 
 
 def test_hashtag_messages() -> None:
