@@ -36,3 +36,6 @@ Thumbs.db
 # Cloudflare Worker
 worker/node_modules/
 worker/.wrangler/
+
+# Local preview output
+tmp/
