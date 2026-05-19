@@ -7,6 +7,10 @@ from io import BytesIO
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
+from pygments import highlight
+from pygments.formatters.img import ImageFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
 
 log = logging.getLogger(__name__)
 
@@ -89,4 +93,44 @@ def render_quote_card(text: str) -> bytes:
 
     buf = BytesIO()
     img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+def _resize_to_card(img: Image.Image) -> Image.Image:
+    """Center-paste the Pygments output onto a card-sized canvas."""
+    canvas = _gradient_background(CARD_WIDTH, CARD_HEIGHT)
+    snippet_max_w = CARD_WIDTH - _SIDE_PADDING * 2
+    snippet_max_h = CARD_HEIGHT - _SIDE_PADDING * 2
+    w, h = img.size
+    scale = min(snippet_max_w / w, snippet_max_h / h, 1.0)
+    if scale < 1.0:
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        w, h = img.size
+    x = (CARD_WIDTH - w) // 2
+    y = (CARD_HEIGHT - h) // 2
+    canvas.paste(img, (x, y))
+    return canvas
+
+
+def render_code_card(snippet: str, *, language: str) -> bytes:
+    """Render the snippet as a syntax-highlighted code card."""
+    try:
+        lexer = get_lexer_by_name(language, stripall=True)
+    except ClassNotFound:
+        lexer = get_lexer_by_name("text", stripall=True)
+
+    formatter = ImageFormatter(
+        font_name=str(_FONT_REGULAR),
+        font_size=22,
+        line_numbers=False,
+        style="monokai",
+        image_pad=24,
+        line_pad=6,
+    )
+    raw_png = highlight(snippet, lexer, formatter)
+    snippet_img = Image.open(BytesIO(raw_png))
+    card = _resize_to_card(snippet_img)
+
+    buf = BytesIO()
+    card.save(buf, format="PNG", optimize=True)
     return buf.getvalue()

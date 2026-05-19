@@ -26,3 +26,20 @@ def test_render_quote_card_returns_png_of_expected_size() -> None:
 def test_render_quote_card_handles_empty_text() -> None:
     png = render_quote_card("")
     assert png[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_render_code_card_returns_png_of_expected_size() -> None:
+    from agent.generators.image_card import render_code_card
+
+    snippet = "SELECT id, SUM(amount)\nFROM orders\nGROUP BY id;"
+    png = render_code_card(snippet, language="sql")
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+    img = _open(png)
+    assert img.size == (CARD_WIDTH, CARD_HEIGHT)
+
+
+def test_render_code_card_unknown_language_falls_back_to_text() -> None:
+    from agent.generators.image_card import render_code_card
+
+    png = render_code_card("hello world", language="klingon")
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
