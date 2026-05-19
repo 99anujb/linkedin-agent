@@ -23,6 +23,14 @@ class Settings(BaseModel):
     db_path: Path
     log_level: str = "INFO"
 
+    # Phase 2 — Buffer + approval flow
+    buffer_access_token: str = Field(min_length=1)
+    buffer_linkedin_profile_id: str = Field(min_length=1)
+    hmac_secret: str = Field(min_length=1)
+    approval_base_url: str = Field(min_length=1)
+    post_local_timezone: str = "America/New_York"
+    post_local_time: str = "11:00"  # HH:MM 24h
+
 
 _REQUIRED = (
     "ANTHROPIC_API_KEY",
@@ -32,11 +40,14 @@ _REQUIRED = (
     "GMAIL_RECIPIENT",
     "PROFILE_PATH",
     "DB_PATH",
+    "BUFFER_ACCESS_TOKEN",
+    "BUFFER_LINKEDIN_PROFILE_ID",
+    "HMAC_SECRET",
+    "APPROVAL_BASE_URL",
 )
 
 
 def load_settings() -> Settings:
-    """Load settings from environment (and .env if present)."""
     load_dotenv(override=False)
     missing = [v for v in _REQUIRED if not os.environ.get(v)]
     if missing:
@@ -50,4 +61,10 @@ def load_settings() -> Settings:
         profile_path=Path(os.environ["PROFILE_PATH"]),
         db_path=Path(os.environ["DB_PATH"]),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
+        buffer_access_token=os.environ["BUFFER_ACCESS_TOKEN"],
+        buffer_linkedin_profile_id=os.environ["BUFFER_LINKEDIN_PROFILE_ID"],
+        hmac_secret=os.environ["HMAC_SECRET"],
+        approval_base_url=os.environ["APPROVAL_BASE_URL"],
+        post_local_timezone=os.environ.get("POST_LOCAL_TIMEZONE", "America/New_York"),
+        post_local_time=os.environ.get("POST_LOCAL_TIME", "11:00"),
     )

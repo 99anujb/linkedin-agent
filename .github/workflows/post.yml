@@ -1,10 +1,20 @@
-name: draft
+name: post
 on:
-  schedule:
-    - cron: "0 12 * * *"   # 12:00 UTC daily ≈ 08:00 ET (DST)
   workflow_dispatch:
+    inputs:
+      draft_id:
+        description: "Draft UUID from SQLite"
+        required: true
+      action:
+        description: "approve | reject"
+        required: true
+        type: choice
+        options:
+          - approve
+          - reject
+
 jobs:
-  draft:
+  post:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,28 +33,29 @@ jobs:
         env:
           PROFILE_B64: ${{ secrets.PROFILE_B64 }}
         run: |
-          if [ -z "$PROFILE_B64" ]; then
-            echo "PROFILE_B64 secret missing"; exit 1
-          fi
+          if [ -z "$PROFILE_B64" ]; then echo "PROFILE_B64 missing"; exit 1; fi
           echo "$PROFILE_B64" | base64 -d > master_profile.json
 
-      - name: Run draft
+      - name: Run post
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
           GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
+          PROFILE_PATH: ./master_profile.json
+          DB_PATH: ./db/state.sqlite
+          LOG_LEVEL: INFO
           BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
           BUFFER_LINKEDIN_PROFILE_ID: ${{ secrets.BUFFER_LINKEDIN_PROFILE_ID }}
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           APPROVAL_BASE_URL: ${{ secrets.APPROVAL_BASE_URL }}
-          PROFILE_PATH: ./master_profile.json
-          DB_PATH: ./db/state.sqlite
-          LOG_LEVEL: INFO
-        run: python -m agent draft
+        run: |
+          python -m agent post \
+            --draft-id "${{ inputs.draft_id }}" \
+            --action "${{ inputs.action }}"
 
-      - name: Wipe decoded profile (defense in depth)
+      - name: Wipe decoded profile
         if: always()
         run: rm -f master_profile.json
 
@@ -56,6 +67,6 @@ jobs:
             echo "no DB changes to commit"
           else
             git add db/state.sqlite
-            git commit -m "chore(db): state after $(date -u +'%Y-%m-%dT%H:%MZ') draft"
+            git commit -m "chore(db): state after post ${{ inputs.action }} of ${{ inputs.draft_id }}"
             git push
           fi

@@ -10,6 +10,7 @@ from datetime import date
 from email.message import EmailMessage
 from typing import Any
 
+from agent.auth.tokens import sign_token
 from agent.config import Settings
 from agent.db.store import (
     Draft,
@@ -119,10 +120,22 @@ def run_draft(
         advance_after_draft(conn, decision)
         update_rotation_state(conn, last_day=today.isoformat())
 
+        approve_tok = sign_token(
+            draft.id, "approve", ttl_seconds=24 * 3600, secret=settings.hmac_secret
+        )
+        reject_tok = sign_token(
+            draft.id, "reject", ttl_seconds=24 * 3600, secret=settings.hmac_secret
+        )
+        base = settings.approval_base_url.rstrip("/")
+        approve_url = f"{base}/a?t={approve_tok}"
+        reject_url = f"{base}/r?t={reject_tok}"
+
         msg = build_draft_email(
             draft=draft,
             sender=settings.gmail_username,
             recipient=settings.gmail_recipient,
+            approve_url=approve_url,
+            reject_url=reject_url,
         )
         email_send_fn(msg)
 

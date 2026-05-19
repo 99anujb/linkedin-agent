@@ -28,6 +28,10 @@ def settings(tmp_path: Path, sample_profile_path: Path) -> Settings:
         profile_path=sample_profile_path,
         db_path=tmp_path / "state.sqlite",
         log_level="INFO",
+        buffer_access_token="btkn",
+        buffer_linkedin_profile_id="p1",
+        hmac_secret="secret-32-bytes-aaaaaaaaaaaaaaaa",
+        approval_base_url="https://approval.example.workers.dev",
     )
 
 
@@ -79,6 +83,15 @@ def test_run_draft_happy_path(settings: Settings) -> None:
     assert rs.last_day == "2026-05-13"
     assert rs.exp_index == 1
     conn.close()
+
+    # Verify email has real signed tokens (not placeholders)
+    sent_args = send_fn.call_args
+    sent_msg = sent_args.args[0] if sent_args.args else sent_args.kwargs.get("msg")
+    assert sent_msg is not None
+    html = sent_msg.get_body(preferencelist=("html",)).get_content()
+    assert "approval.example.workers.dev/a?t=" in html
+    assert "approval.example.workers.dev/r?t=" in html
+    assert "placeholder" not in html
 
     image_fn.assert_called_once()
     send_fn.assert_called_once()

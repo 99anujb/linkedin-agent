@@ -1,0 +1,10 @@
+name = "linkedin-agent-approval"
+main = "approval.js"
+compatibility_date = "2026-04-01"
+
+# Secrets are set via `wrangler secret put` rather than declared here:
+#   wrangler secret put HMAC_SECRET
+#   wrangler secret put GH_PAT
+#   wrangler secret put GH_REPO          # e.g. 99anujb/linkedin-agent
+#   wrangler secret put GH_WORKFLOW_FILE # post.yml
+#   wrangler secret put GH_REF           # main

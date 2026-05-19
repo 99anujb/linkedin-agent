@@ -16,6 +16,10 @@ def _full_env() -> dict[str, str]:
         "PROFILE_PATH": "./master_profile.json",
         "DB_PATH": "./db/state.sqlite",
         "LOG_LEVEL": "INFO",
+        "BUFFER_ACCESS_TOKEN": "btkn",
+        "BUFFER_LINKEDIN_PROFILE_ID": "p1",
+        "HMAC_SECRET": "secret-32-bytes-aaaaaaaaaaaaaaaa",
+        "APPROVAL_BASE_URL": "https://approval.example.workers.dev",
     }
 
 
@@ -53,3 +57,33 @@ def test_log_level_defaults_to_info(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("LOG_LEVEL", raising=False)
     s = load_settings()
     assert s.log_level == "INFO"
+
+
+def test_settings_includes_phase2_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    env = _full_env()
+    env.update(
+        {
+            "POST_LOCAL_TIMEZONE": "America/New_York",
+            "POST_LOCAL_TIME": "11:00",
+        }
+    )
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    s = load_settings()
+    assert s.buffer_access_token == "btkn"
+    assert s.buffer_linkedin_profile_id == "p1"
+    assert s.hmac_secret == "secret-32-bytes-aaaaaaaaaaaaaaaa"
+    assert s.approval_base_url == "https://approval.example.workers.dev"
+    assert s.post_local_timezone == "America/New_York"
+    assert s.post_local_time == "11:00"
+
+
+def test_post_local_fields_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    env = _full_env()
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    for k in ("POST_LOCAL_TIMEZONE", "POST_LOCAL_TIME"):
+        monkeypatch.delenv(k, raising=False)
+    s = load_settings()
+    assert s.post_local_timezone == "America/New_York"
+    assert s.post_local_time == "11:00"
