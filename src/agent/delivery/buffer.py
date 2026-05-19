@@ -121,12 +121,13 @@ def schedule_update(
     scheduled_at: datetime,
 ) -> str:
     """Schedule a single post on Buffer. Returns the post id."""
-    assets: list[dict[str, str]] = (
+    assets: list[dict[str, Any]] = (
         [
             {
-                "type": "image",
-                "url": media_link,
-                "thumbnailUrl": media_link,
+                "image": {
+                    "url": media_link,
+                    "thumbnailUrl": media_link,
+                }
             }
         ]
         if media_link

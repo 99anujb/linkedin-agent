@@ -120,9 +120,10 @@ def test_schedule_update_sends_createpost_mutation() -> None:
     assert inp["mode"] == "customScheduled"
     assert inp["assets"] == [
         {
-            "type": "image",
-            "url": "https://images.example/x.jpg",
-            "thumbnailUrl": "https://images.example/x.jpg",
+            "image": {
+                "url": "https://images.example/x.jpg",
+                "thumbnailUrl": "https://images.example/x.jpg",
+            }
         }
     ]
     assert route.calls.last.request.headers["authorization"] == "Bearer tkn"
