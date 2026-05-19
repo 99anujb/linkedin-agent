@@ -21,10 +21,16 @@ def test_commit_and_push_runs_git_commands_when_ci_set(monkeypatch) -> None:
         commit_and_push(paths, message="add cards")
     calls = [c.args[0] for c in run.call_args_list]
     assert calls[0] == [
-        "git", "config", "user.name", "linkedin-agent",
+        "git",
+        "config",
+        "user.name",
+        "linkedin-agent",
     ]
     assert calls[1] == [
-        "git", "config", "user.email", "noreply@anthropic.com",
+        "git",
+        "config",
+        "user.email",
+        "noreply@anthropic.com",
     ]
     assert calls[2] == ["git", "add", "db/images/a.png", "db/images/b.png"]
     assert calls[3] == ["git", "commit", "-m", "add cards"]

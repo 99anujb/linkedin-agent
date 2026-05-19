@@ -28,8 +28,7 @@ def main() -> int:
     for p in profiles:
         print(f"{p.service}\t{p.id}\t{p.username}")
     print(
-        "\nCopy the `id` for service=linkedin into .env as "
-        "BUFFER_LINKEDIN_PROFILE_ID.",
+        "\nCopy the `id` for service=linkedin into .env as " "BUFFER_LINKEDIN_PROFILE_ID.",
         file=sys.stderr,
     )
     return 0

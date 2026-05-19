@@ -115,7 +115,7 @@ def run_draft(
                     caption=caption,
                     post_type=decision.post_type,
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.warning("snippet generation failed: %s", exc)
 
         draft_id = str(uuid.uuid4())
@@ -136,11 +136,9 @@ def run_draft(
             raw_base = settings.github_raw_base.rstrip("/")
             image_url = f"{raw_base}/db/images/{draft_id}.png"
             image_credit = "Generated card"
-        except Exception as exc:  # noqa: BLE001 - last-ditch fallback
+        except Exception as exc:
             log.warning("card pipeline failed (%s); using Unsplash fallback", exc)
-            fallback = image_fn(
-                keywords=source.keywords, access_key=settings.unsplash_access_key
-            )
+            fallback = image_fn(keywords=source.keywords, access_key=settings.unsplash_access_key)
             image_url = fallback.url
             image_credit = fallback.credit
 

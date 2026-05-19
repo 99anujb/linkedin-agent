@@ -124,7 +124,8 @@ def test_run_draft_skips_when_already_drafted(settings: Settings) -> None:
 
 @freeze_time("2026-05-13T12:00:00Z")
 def test_run_draft_falls_back_to_unsplash_on_render_failure(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch,
+    settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     init_db(settings.db_path).close()
 

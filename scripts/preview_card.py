@@ -13,8 +13,7 @@ def main() -> int:
     OUT.mkdir(exist_ok=True)
     (OUT / "preview_quote.png").write_bytes(
         render_quote_card(
-            "Three years ago I shipped a model with no test coverage.\n"
-            "It cost us a quarter."
+            "Three years ago I shipped a model with no test coverage.\n" "It cost us a quarter."
         )
     )
     (OUT / "preview_code_sql.png").write_bytes(

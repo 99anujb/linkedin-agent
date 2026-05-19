@@ -29,9 +29,7 @@ def test_generate_snippet_parses_language_and_body() -> None:
 def test_generate_snippet_defaults_language_when_missing() -> None:
     raw = "SELECT 1;"
     client = _mock_anthropic(raw)
-    snippet, language = generate_snippet(
-        client, caption="x", post_type="concept"
-    )
+    snippet, language = generate_snippet(client, caption="x", post_type="concept")
     assert language == "text"
     assert snippet == "SELECT 1;"
 

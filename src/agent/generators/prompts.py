@@ -79,8 +79,7 @@ def build_caption_messages(
     if source.metrics:
         metrics_block = (
             "\nMetrics from the source (use these exact numbers if you "
-            "cite any):\n"
-            + "\n".join(f"- {k}: {v}" for k, v in source.metrics.items())
+            "cite any):\n" + "\n".join(f"- {k}: {v}" for k, v in source.metrics.items())
         )
     user = (
         f"Post type: {post_type}\n"

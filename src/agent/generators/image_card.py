@@ -7,10 +7,10 @@ from io import BytesIO
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
-from pygments import highlight
-from pygments.formatters.img import ImageFormatter
-from pygments.lexers import get_lexer_by_name
-from pygments.util import ClassNotFound
+from pygments import highlight  # type: ignore[import-untyped]
+from pygments.formatters.img import ImageFormatter  # type: ignore[import-untyped]
+from pygments.lexers import get_lexer_by_name  # type: ignore[import-untyped]
+from pygments.util import ClassNotFound  # type: ignore[import-untyped]
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ def _gradient_background(width: int, height: int) -> Image.Image:
     top_r, top_g, top_b = _BG_TOP
     bot_r, bot_g, bot_b = _BG_BOTTOM
     pixels = base.load()
+    assert pixels is not None
     for y in range(height):
         t = y / max(height - 1, 1)
         r = int(top_r + (bot_r - top_r) * t)
@@ -104,7 +105,7 @@ def _resize_to_card(img: Image.Image) -> Image.Image:
     w, h = img.size
     scale = min(snippet_max_w / w, snippet_max_h / h, 1.0)
     if scale < 1.0:
-        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        img = img.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
         w, h = img.size
     x = (CARD_WIDTH - w) // 2
     y = (CARD_HEIGHT - h) // 2
@@ -150,6 +151,6 @@ def pick_and_render(
     if post_type in _CODE_TYPES and snippet and language:
         try:
             return render_code_card(snippet, language=language)
-        except Exception:  # noqa: BLE001 - fall back to quote on any render error
+        except Exception:
             log.warning("code card render failed; falling back to quote card")
     return render_quote_card(hook)
