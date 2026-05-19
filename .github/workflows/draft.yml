@@ -35,6 +35,10 @@ jobs:
           GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_LINKEDIN_PROFILE_ID: ${{ secrets.BUFFER_LINKEDIN_PROFILE_ID }}
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          APPROVAL_BASE_URL: ${{ secrets.APPROVAL_BASE_URL }}
           PROFILE_PATH: ./master_profile.json
           DB_PATH: ./db/state.sqlite
           LOG_LEVEL: INFO
