@@ -63,10 +63,10 @@ jobs:
         run: |
           git config user.name "linkedin-agent"
           git config user.email "noreply@anthropic.com"
-          if git diff --quiet db/state.sqlite; then
+          git add db/state.sqlite
+          if git diff --cached --quiet db/state.sqlite; then
             echo "no DB changes to commit"
           else
-            git add db/state.sqlite
             git commit -m "chore(db): state after post ${{ inputs.action }} of ${{ inputs.draft_id }}"
             git push
           fi
