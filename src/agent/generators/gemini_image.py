@@ -1,7 +1,11 @@
-"""Gemini Imagen client: generate a LinkedIn hero image from a prompt.
+"""Gemini image generation: hero image from a text prompt.
 
-Uses the Generative Language API (https://generativelanguage.googleapis.com).
+Uses Google's free-tier Gemini native image generation via the
+`generateContent` endpoint (model `gemini-2.5-flash-image` by default).
 Returns raw PNG bytes. Caller is responsible for fallbacks.
+
+The older `imagen-*` predict-style models are paid only and are not
+used here.
 """
 
 from __future__ import annotations
@@ -13,18 +17,34 @@ import httpx
 
 log = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "imagen-3.0-generate-002"
+DEFAULT_MODEL = "gemini-2.5-flash-image"
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_ASPECT = "16:9"
 TIMEOUT = 60.0
 
 
 class GeminiImageError(RuntimeError):
-    """Raised when Imagen returns no usable image."""
+    """Raised when the Gemini image API returns no usable image."""
 
 
 def _endpoint(model: str, api_key: str) -> str:
-    return f"{API_BASE}/{model}:predict?key={api_key}"
+    return f"{API_BASE}/{model}:generateContent?key={api_key}"
+
+
+def _extract_image_bytes(payload: dict) -> bytes | None:
+    """Walk the response and return raw bytes from the first inlineData part."""
+    for cand in payload.get("candidates") or []:
+        for part in (cand.get("content") or {}).get("parts") or []:
+            data = part.get("inlineData") or part.get("inline_data")
+            if not data:
+                continue
+            b64 = data.get("data")
+            if b64:
+                try:
+                    return base64.b64decode(b64)
+                except (ValueError, TypeError):
+                    continue
+    return None
 
 
 def generate_image(
@@ -39,46 +59,38 @@ def generate_image(
     if not api_key:
         raise GeminiImageError("missing GEMINI_API_KEY")
 
+    full_prompt = f"{prompt}\n\nAspect ratio: {aspect_ratio}."
     body = {
-        "instances": [{"prompt": prompt}],
-        "parameters": {
-            "sampleCount": 1,
-            "aspectRatio": aspect_ratio,
-            "personGeneration": "allow_adult",
-        },
+        "contents": [{"role": "user", "parts": [{"text": full_prompt}]}],
+        "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
     }
 
     url = _endpoint(model, api_key)
-    log.info("Calling Imagen (model=%s, aspect=%s)", model, aspect_ratio)
+    log.info("Calling Gemini image (model=%s, aspect=%s)", model, aspect_ratio)
     try:
         if client is None:
             resp = httpx.post(url, json=body, timeout=TIMEOUT)
         else:
             resp = client.post(url, json=body, timeout=TIMEOUT)
     except httpx.HTTPError as e:
-        raise GeminiImageError(f"Imagen HTTP error: {e}") from e
+        raise GeminiImageError(f"Gemini image HTTP error: {e}") from e
 
     if resp.status_code >= 400:
-        raise GeminiImageError(f"Imagen API {resp.status_code}: {resp.text[:300]}")
+        raise GeminiImageError(f"Gemini image API {resp.status_code}: {resp.text[:300]}")
 
     try:
         payload = resp.json()
     except ValueError as e:
-        raise GeminiImageError(f"Imagen response not JSON: {e}") from e
+        raise GeminiImageError(f"Gemini image response not JSON: {e}") from e
 
-    preds = payload.get("predictions") or []
-    if not preds:
-        raise GeminiImageError(f"Imagen returned no predictions: {payload}")
-
-    b64 = preds[0].get("bytesBase64Encoded") or preds[0].get("image", {}).get("bytesBase64Encoded")
-    if not b64:
-        raise GeminiImageError(f"Imagen prediction missing image bytes: {preds[0]}")
-
-    return base64.b64decode(b64)
+    image_bytes = _extract_image_bytes(payload)
+    if image_bytes is None:
+        raise GeminiImageError(f"Gemini image response had no image data: {payload}")
+    return image_bytes
 
 
 def build_image_prompt(*, post_type: str, hook: str, keywords: list[str]) -> str:
-    """Compose a topic-aware prompt for Imagen given the post context."""
+    """Compose a topic-aware prompt for image generation."""
     style = (
         "Modern editorial illustration for a LinkedIn post. Clean, professional, "
         "vibrant but tasteful color palette. Minimal text, no logos, no captions, "
