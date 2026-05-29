@@ -12,7 +12,7 @@ from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wai
 from agent.generators.prompts import build_hashtag_messages
 
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
-MAX_TOKENS = 256
+MAX_TOKENS = 512
 
 log = logging.getLogger(__name__)
 
