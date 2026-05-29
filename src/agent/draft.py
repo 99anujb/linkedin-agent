@@ -24,8 +24,7 @@ from agent.delivery.email import build_draft_email, send_email
 from agent.delivery.git_publish import commit_and_push
 from agent.generators.caption import generate_caption
 from agent.generators.hashtags import format_hashtags, generate_hashtags
-from agent.generators.image import ImageResult, fetch_image
-from agent.generators.image_card import pick_and_render
+from agent.generators.image_picker import pick_image
 from agent.generators.snippet import generate_snippet
 from agent.profile_model import load_profile
 from agent.rotation import advance_after_draft, pick_today
@@ -34,7 +33,6 @@ from agent.sources.profile import build_source
 log = logging.getLogger(__name__)
 
 
-ImageFn = Callable[..., ImageResult]
 EmailSendFn = Callable[..., None]
 
 
@@ -46,10 +44,6 @@ class DraftResult:
     message: str = ""
 
 
-def _default_image_fn(keywords: list[str], access_key: str) -> ImageResult:
-    return fetch_image(keywords=keywords, access_key=access_key)
-
-
 def _default_email_send(msg: EmailMessage, *, username: str, password: str) -> None:
     send_email(msg, username=username, password=password)
 
@@ -58,17 +52,18 @@ def run_draft(
     settings: Settings,
     *,
     anthropic_client: Any,
-    image_fn: ImageFn | None = None,
+    image_fn: Any | None = None,  # deprecated, accepted for backwards-compat
     email_send_fn: EmailSendFn | None = None,
     today: date | None = None,
     force: bool = False,
     override_post_type: str | None = None,
     dry_run: bool = False,
 ) -> DraftResult:
+    """Run the draft pipeline. `image_fn` is no longer consulted; image
+    selection now lives in `agent.generators.image_picker`. The parameter
+    is preserved so existing callers / tests continue to work."""
+    _ = image_fn  # intentionally unused
     today = today or date.today()
-    image_fn = image_fn or (
-        lambda keywords, **_: _default_image_fn(keywords, settings.unsplash_access_key)
-    )
     email_send_fn = email_send_fn or (
         lambda msg, **_: _default_email_send(
             msg, username=settings.gmail_username, password=settings.gmail_app_password
@@ -91,7 +86,7 @@ def run_draft(
             log.info("Already drafted today (%s); skipping.", today)
             return DraftResult(status="skipped", message=f"already drafted on {today}")
 
-        source = build_source(decision, profile)
+        source = build_source(decision, profile, conn=conn)
         caption = generate_caption(
             anthropic_client,
             post_type=decision.post_type,
@@ -108,7 +103,7 @@ def run_draft(
         hook = "\n".join(caption.strip().splitlines()[:2])
         snippet_text: str | None = None
         snippet_language: str | None = None
-        if decision.post_type in ("project", "concept"):
+        if decision.post_type in ("project", "tutorial"):
             try:
                 snippet_text, snippet_language = generate_snippet(
                     anthropic_client,
@@ -121,26 +116,31 @@ def run_draft(
         draft_id = str(uuid.uuid4())
         image_path = Path("db/images") / f"{draft_id}.png"
         image_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            png = pick_and_render(
-                post_type=decision.post_type,
-                hook=hook,
-                snippet=snippet_text,
-                language=snippet_language,
-            )
-            image_path.write_bytes(png)
-            commit_and_push(
-                [image_path],
-                message=f"chore(image): card for draft {draft_id}",
-            )
+
+        outcome = pick_image(
+            post_type=decision.post_type,
+            hook=hook,
+            keywords=source.keywords,
+            snippet=snippet_text,
+            language=snippet_language,
+            gemini_api_key=settings.gemini_api_key or None,
+            unsplash_access_key=settings.unsplash_access_key or None,
+        )
+        if outcome.bytes_ is not None:
+            image_path.write_bytes(outcome.bytes_)
+            try:
+                commit_and_push(
+                    [image_path],
+                    message=f"chore(image): {outcome.strategy} card for draft {draft_id}",
+                )
+            except Exception as exc:
+                log.warning("git_publish failed: %s", exc)
             raw_base = settings.github_raw_base.rstrip("/")
             image_url = f"{raw_base}/db/images/{draft_id}.png"
-            image_credit = "Generated card"
-        except Exception as exc:
-            log.warning("card pipeline failed (%s); using Unsplash fallback", exc)
-            fallback = image_fn(keywords=source.keywords, access_key=settings.unsplash_access_key)
-            image_url = fallback.url
-            image_credit = fallback.credit
+            image_credit = outcome.credit
+        else:
+            image_url = outcome.url or ""
+            image_credit = outcome.credit
 
         draft = Draft(
             id=draft_id,

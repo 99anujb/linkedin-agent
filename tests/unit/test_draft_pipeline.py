@@ -15,6 +15,7 @@ from agent.db.store import (
 )
 from agent.draft import DraftResult, run_draft
 from agent.generators.image import ImageResult
+from agent.generators.image_picker import ImageOutcome
 
 
 @pytest.fixture
@@ -67,21 +68,22 @@ def test_run_draft_happy_path(settings: Settings) -> None:
         anthropic_client=anthropic,
         image_fn=image_fn,
         email_send_fn=send_fn,
-        today=date(2026, 5, 13),  # Wed → career
+        today=date(2026, 5, 13),  # Wed → tutorial
     )
     assert isinstance(result, DraftResult)
     assert result.status == "drafted"
-    assert result.post_type == "career"
+    assert result.post_type == "tutorial"
 
     conn = sqlite3.connect(settings.db_path)
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT * FROM drafts WHERE id = ?", (result.draft_id,)).fetchone()
     assert row is not None
     assert row["status"] == "pending"
-    assert row["post_type"] == "career"
+    assert row["post_type"] == "tutorial"
     rs = get_rotation_state(conn)
     assert rs.last_day == "2026-05-13"
-    assert rs.exp_index == 1
+    # tutorial advances the skill index (shared with concept).
+    assert rs.skill_index == 1
     conn.close()
 
     # Verify email has real signed tokens (not placeholders)
@@ -123,16 +125,22 @@ def test_run_draft_skips_when_already_drafted(settings: Settings) -> None:
 
 
 @freeze_time("2026-05-13T12:00:00Z")
-def test_run_draft_falls_back_to_unsplash_on_render_failure(
+def test_run_draft_uses_pick_image_url_outcome(
     settings: Settings,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """When pick_image returns a URL (Unsplash path), draft uses it directly."""
     init_db(settings.db_path).close()
 
-    def _boom(**_):
-        raise RuntimeError("boom")
+    def _fake_pick(**_):
+        return ImageOutcome(
+            bytes_=None,
+            url="https://images.unsplash.com/test.jpg",
+            credit="Photo: Unsplash",
+            strategy="unsplash",
+        )
 
-    monkeypatch.setattr("agent.draft.pick_and_render", _boom)
+    monkeypatch.setattr("agent.draft.pick_image", _fake_pick)
 
     anthropic, image_fn, send_fn = _wire_fakes()
     result = run_draft(
@@ -143,7 +151,12 @@ def test_run_draft_falls_back_to_unsplash_on_render_failure(
         today=date(2026, 5, 13),
     )
     assert result.status == "drafted"
-    image_fn.assert_called_once()
+
+    conn = sqlite3.connect(settings.db_path)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM drafts WHERE id = ?", (result.draft_id,)).fetchone()
+    assert row["image_url"] == "https://images.unsplash.com/test.jpg"
+    conn.close()
 
 
 @freeze_time("2026-05-13T12:00:00Z")

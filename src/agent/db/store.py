@@ -157,6 +157,44 @@ def get_rotation_state(conn: sqlite3.Connection) -> RotationState:
     )
 
 
+def record_posted_project(
+    conn: sqlite3.Connection, project_id: str, *, draft_id: str | None = None
+) -> None:
+    """Mark a project as posted so rotation skips it next time."""
+    conn.execute(
+        "INSERT OR REPLACE INTO posted_projects (project_id, posted_at, draft_id) "
+        "VALUES (?, ?, ?)",
+        (project_id, _iso(_utcnow()), draft_id),
+    )
+    conn.commit()
+
+
+def posted_project_ids(conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute("SELECT project_id FROM posted_projects").fetchall()
+    return {r["project_id"] for r in rows}
+
+
+def record_seen_headline(
+    conn: sqlite3.Connection,
+    *,
+    headline_hash: str,
+    title: str,
+    source: str,
+    link: str,
+) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO seen_headlines (headline_hash, title, source, link, seen_at) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (headline_hash, title, source, link, _iso(_utcnow())),
+    )
+    conn.commit()
+
+
+def seen_headline_hashes(conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute("SELECT headline_hash FROM seen_headlines").fetchall()
+    return {r["headline_hash"] for r in rows}
+
+
 def update_rotation_state(
     conn: sqlite3.Connection,
     *,

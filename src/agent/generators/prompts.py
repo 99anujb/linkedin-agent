@@ -66,6 +66,38 @@ _TYPE_INSTRUCTIONS = {
         "employers. End with a question that invites the reader to "
         "share their own pivot or milestone."
     ),
+    "trending": (
+        "React to the supplied headline. Open with a hook emoji + a "
+        "punchy 1-2 line take on what is new or what changed. Use 3-4 "
+        "emoji-bulleted beats to explain why it matters to data / AI "
+        "practitioners in plain language, one concrete implication for "
+        "the reader's day-to-day, and one open question or risk. Do "
+        "NOT just summarize the article. Add real perspective. Close "
+        "with a CTA asking how the reader is thinking about it."
+    ),
+    "news_take": (
+        "Hot-take format. Open with a hook emoji and a clear stance on "
+        "the supplied headline (agree / disagree / a non-obvious angle). "
+        "Use 2-3 emoji-bulleted reasons grounded in real analytics or "
+        "ML practice. Stay respectful. End with an explicit invitation "
+        "for counterpoints from the reader."
+    ),
+    "tutorial": (
+        "Teach ONE concrete technique from the supplied skill area in "
+        "a do-this-not-that format. Open with a hook emoji + the "
+        "promise (what the reader will learn in 60 seconds). Use 3-5 "
+        "emoji-bulleted steps or rules. Include one tiny copy-pasteable "
+        "example (SQL snippet, Python one-liner, mental shortcut). End "
+        "with a CTA asking the reader to share their own variation."
+    ),
+    "roadmap": (
+        "Produce a tight learning roadmap or 4-step framework for the "
+        "supplied target role. Open with a hook emoji + a contrarian "
+        "or motivating claim. Use 1️⃣ 2️⃣ 3️⃣ 4️⃣ or 30/60/90 day markers "
+        "for the steps. Keep each step short, concrete, and free or "
+        "near-free to start. Close with a CTA inviting the reader to "
+        "share their own path."
+    ),
 }
 
 

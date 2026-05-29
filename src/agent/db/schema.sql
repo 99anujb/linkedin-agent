@@ -34,3 +34,17 @@ CREATE TABLE IF NOT EXISTS post_history (
     posted_at       TEXT,
     linkedin_url    TEXT
 );
+
+CREATE TABLE IF NOT EXISTS posted_projects (
+    project_id      TEXT PRIMARY KEY,
+    posted_at       TEXT NOT NULL,
+    draft_id        TEXT
+);
+
+CREATE TABLE IF NOT EXISTS seen_headlines (
+    headline_hash   TEXT PRIMARY KEY,
+    title           TEXT,
+    source          TEXT,
+    link            TEXT,
+    seen_at         TEXT NOT NULL
+);

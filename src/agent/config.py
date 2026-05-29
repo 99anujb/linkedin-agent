@@ -32,6 +32,12 @@ class Settings(BaseModel):
     post_local_time: str = "11:00"  # HH:MM 24h
     github_raw_base: str = "https://raw.githubusercontent.com/99anujb/linkedin-agent/main"
 
+    # Phase 4 — broader content + Gemini imagery. Both optional: the agent
+    # still works without them, just with degraded image quality and no
+    # trending/news posts.
+    gemini_api_key: str = ""
+    rss_feeds: str = ""  # comma-separated "Name|URL,Name|URL" pairs; empty → defaults
+
 
 _REQUIRED = (
     "ANTHROPIC_API_KEY",
@@ -72,4 +78,6 @@ def load_settings() -> Settings:
             "GITHUB_RAW_BASE",
             "https://raw.githubusercontent.com/99anujb/linkedin-agent/main",
         ),
+        gemini_api_key=os.environ.get("GEMINI_API_KEY", ""),
+        rss_feeds=os.environ.get("RSS_FEEDS", ""),
     )

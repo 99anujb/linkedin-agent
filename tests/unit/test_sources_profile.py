@@ -44,3 +44,50 @@ def test_career_source(profile: Profile) -> None:
 def test_unknown_type_raises(profile: Profile) -> None:
     with pytest.raises(ValueError):
         build_source(RotationDecision("commentary", None), profile)
+
+
+def test_tutorial_source(profile: Profile) -> None:
+    src = build_source(RotationDecision("tutorial", "machine_learning"), profile)
+    assert src.source_ref == "tutorial:machine_learning"
+    assert "tutorial" in src.keywords or "how-to" in src.keywords
+    assert "machine_learning" in src.body or "XGBoost" in src.body
+
+
+def test_roadmap_source(profile: Profile) -> None:
+    src = build_source(RotationDecision("roadmap", "Data Scientist"), profile)
+    assert "roadmap" in src.keywords
+    assert "Data Scientist" in src.body
+    assert src.source_ref == "roadmap:data_scientist"
+
+
+def test_trending_needs_conn(profile: Profile) -> None:
+    with pytest.raises(ValueError):
+        build_source(RotationDecision("trending", None), profile)
+
+
+def test_trending_with_fake_headline(profile: Profile, tmp_db, monkeypatch) -> None:
+    from agent.sources import rss
+
+    fake = rss.Headline(
+        title="Anthropic releases new Claude",
+        summary="Claude got better at code.",
+        link="https://anthropic.com/news",
+        source="Anthropic News",
+    )
+    monkeypatch.setattr(
+        "agent.sources.profile.pick_fresh_headline",
+        lambda conn, **_: fake,
+    )
+    src = build_source(RotationDecision("trending", None), profile, conn=tmp_db)
+    assert "Anthropic releases new Claude" in src.body
+    assert src.source_ref.startswith("trending:")
+
+
+def test_news_take_falls_back_when_no_headline(profile: Profile, tmp_db, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "agent.sources.profile.pick_fresh_headline",
+        lambda conn, **_: None,
+    )
+    src = build_source(RotationDecision("news_take", None), profile, conn=tmp_db)
+    # falls back to a concept source so the day still produces a post.
+    assert src.source_ref.startswith("concept:")
