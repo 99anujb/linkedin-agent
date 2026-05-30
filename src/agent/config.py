@@ -38,6 +38,12 @@ class Settings(BaseModel):
     gemini_api_key: str = ""
     rss_feeds: str = ""  # comma-separated "Name|URL,Name|URL" pairs; empty → defaults
 
+    # Cloudflare Workers AI — preferred free-tier image source (FLUX.1-schnell).
+    # Optional; pipeline still works without them (falls through to Gemini /
+    # Unsplash / quote card).
+    cloudflare_account_id: str = ""
+    cloudflare_api_token: str = ""
+
 
 _REQUIRED = (
     "ANTHROPIC_API_KEY",
@@ -80,4 +86,6 @@ def load_settings() -> Settings:
         ),
         gemini_api_key=os.environ.get("GEMINI_API_KEY", ""),
         rss_feeds=os.environ.get("RSS_FEEDS", ""),
+        cloudflare_account_id=os.environ.get("CLOUDFLARE_ACCOUNT_ID", ""),
+        cloudflare_api_token=os.environ.get("CLOUDFLARE_API_TOKEN", ""),
     )

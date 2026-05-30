@@ -125,6 +125,8 @@ def run_draft(
             language=snippet_language,
             gemini_api_key=settings.gemini_api_key or None,
             unsplash_access_key=settings.unsplash_access_key or None,
+            cloudflare_account_id=settings.cloudflare_account_id or None,
+            cloudflare_api_token=settings.cloudflare_api_token or None,
         )
         if outcome.bytes_ is not None:
             image_path.write_bytes(outcome.bytes_)

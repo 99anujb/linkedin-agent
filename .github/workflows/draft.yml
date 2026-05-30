@@ -41,6 +41,8 @@ jobs:
           APPROVAL_BASE_URL: ${{ secrets.APPROVAL_BASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RSS_FEEDS: ${{ secrets.RSS_FEEDS }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PROFILE_PATH: ./master_profile.json
           DB_PATH: ./db/state.sqlite
           LOG_LEVEL: INFO

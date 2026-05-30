@@ -11,11 +11,22 @@ from agent.generators.image_picker import ImageOutcome, pick_image
 def _ok_gemini(prompt: str, *, api_key: str, **_: Any) -> bytes:
     assert api_key == "gkey"
     assert prompt
-    return b"\x89PNG\r\n\x1a\nfake"
+    return b"\x89PNG\r\n\x1a\nfake-gemini"
 
 
 def _fail_gemini(prompt: str, *, api_key: str, **_: Any) -> bytes:
     raise RuntimeError("gemini down")
+
+
+def _ok_cloudflare(prompt: str, *, account_id: str, api_token: str, **_: Any) -> bytes:
+    assert account_id == "cf-acct"
+    assert api_token == "cf-tok"
+    assert prompt
+    return b"\x89PNG\r\n\x1a\nfake-cf"
+
+
+def _fail_cloudflare(prompt: str, *, account_id: str, api_token: str, **_: Any) -> bytes:
+    raise RuntimeError("cloudflare down")
 
 
 def _ok_unsplash(*, keywords: list[str], access_key: str) -> ImageResult:
@@ -28,7 +39,7 @@ def _fail_unsplash(*, keywords: list[str], access_key: str) -> ImageResult:
 
 
 @pytest.mark.parametrize("post_type", ["trending", "concept", "news_take"])
-def test_gemini_first_types(post_type: str) -> None:
+def test_cloudflare_first_for_ai_types(post_type: str) -> None:
     outcome = pick_image(
         post_type=post_type,
         hook="Hook text",
@@ -37,15 +48,18 @@ def test_gemini_first_types(post_type: str) -> None:
         language=None,
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
-    assert outcome.strategy == "gemini"
-    assert outcome.bytes_ is not None
+    assert outcome.strategy == "cloudflare"
+    assert outcome.bytes_ == b"\x89PNG\r\n\x1a\nfake-cf"
     assert outcome.url is None
 
 
-def test_gemini_falls_back_to_unsplash_when_gemini_fails() -> None:
+def test_cloudflare_falls_back_to_gemini() -> None:
     outcome = pick_image(
         post_type="trending",
         hook="Hook",
@@ -54,14 +68,53 @@ def test_gemini_falls_back_to_unsplash_when_gemini_fails() -> None:
         language=None,
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
+        gemini_fn=_ok_gemini,
+        unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_fail_cloudflare,
+    )
+    assert outcome.strategy == "gemini"
+
+
+def test_cloudflare_skipped_without_keys_uses_gemini() -> None:
+    outcome = pick_image(
+        post_type="trending",
+        hook="Hook",
+        keywords=["AI"],
+        snippet=None,
+        language=None,
+        gemini_api_key="gkey",
+        unsplash_access_key="ukey",
+        cloudflare_account_id=None,
+        cloudflare_api_token=None,
+        gemini_fn=_ok_gemini,
+        unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
+    )
+    assert outcome.strategy == "gemini"
+
+
+def test_all_ai_failing_falls_back_to_unsplash() -> None:
+    outcome = pick_image(
+        post_type="trending",
+        hook="Hook",
+        keywords=["AI"],
+        snippet=None,
+        language=None,
+        gemini_api_key="gkey",
+        unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_fail_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_fail_cloudflare,
     )
     assert outcome.strategy == "unsplash"
     assert outcome.url == "https://images.unsplash.com/x.jpg"
 
 
-def test_gemini_falls_back_to_quote_card_when_both_fail() -> None:
+def test_all_failing_falls_back_to_quote_card() -> None:
     outcome = pick_image(
         post_type="trending",
         hook="Hook on a single line",
@@ -70,8 +123,11 @@ def test_gemini_falls_back_to_quote_card_when_both_fail() -> None:
         language=None,
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_fail_gemini,
         unsplash_fn=_fail_unsplash,
+        cloudflare_fn=_fail_cloudflare,
     )
     assert outcome.strategy == "quote"
     assert outcome.bytes_ is not None
@@ -86,13 +142,16 @@ def test_tutorial_prefers_code_card_when_snippet_present() -> None:
         language="sql",
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
     assert outcome.strategy == "code"
 
 
-def test_tutorial_falls_back_to_gemini_without_snippet() -> None:
+def test_tutorial_falls_back_to_cloudflare_without_snippet() -> None:
     outcome = pick_image(
         post_type="tutorial",
         hook="Hook",
@@ -101,14 +160,16 @@ def test_tutorial_falls_back_to_gemini_without_snippet() -> None:
         language=None,
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
-    assert outcome.strategy == "gemini"
+    assert outcome.strategy == "cloudflare"
 
 
 def test_project_prefers_code_card_then_unsplash() -> None:
-    # No snippet → skip code; gemini disabled by missing key → unsplash.
     outcome = pick_image(
         post_type="project",
         hook="Hook",
@@ -117,8 +178,11 @@ def test_project_prefers_code_card_then_unsplash() -> None:
         language=None,
         gemini_api_key=None,
         unsplash_access_key="ukey",
+        cloudflare_account_id=None,
+        cloudflare_api_token=None,
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
     assert outcome.strategy == "unsplash"
 
@@ -132,8 +196,11 @@ def test_roadmap_uses_quote_card() -> None:
         language=None,
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
     assert outcome.strategy == "quote"
     assert outcome.bytes_ is not None
@@ -148,13 +215,16 @@ def test_career_uses_unsplash_first() -> None:
         language=None,
         gemini_api_key="gkey",
         unsplash_access_key="ukey",
+        cloudflare_account_id="cf-acct",
+        cloudflare_api_token="cf-tok",
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
     assert outcome.strategy == "unsplash"
 
 
-def test_gemini_skipped_when_no_api_key() -> None:
+def test_no_ai_keys_falls_to_unsplash_for_ai_types() -> None:
     outcome = pick_image(
         post_type="trending",
         hook="Hook",
@@ -163,8 +233,11 @@ def test_gemini_skipped_when_no_api_key() -> None:
         language=None,
         gemini_api_key=None,
         unsplash_access_key="ukey",
+        cloudflare_account_id=None,
+        cloudflare_api_token=None,
         gemini_fn=_ok_gemini,
         unsplash_fn=_ok_unsplash,
+        cloudflare_fn=_ok_cloudflare,
     )
     assert outcome.strategy == "unsplash"
 

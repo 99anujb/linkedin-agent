@@ -1,9 +1,9 @@
 """Pick the right image strategy per post type with safe fallbacks.
 
 Order per type:
-  trending / concept / news_take      → Gemini Imagen → Unsplash → quote card
-  tutorial                            → code card → Gemini Imagen → quote card
-  roadmap                             → quote card → Gemini Imagen → Unsplash
+  trending / concept / news_take      → Cloudflare → Gemini → Unsplash → quote card
+  tutorial                            → code card → Cloudflare → Gemini → Unsplash → quote card
+  roadmap                             → quote card
   career                              → Unsplash → quote card
   project                             → code card → Unsplash → quote card
 
@@ -19,6 +19,10 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from agent.generators.cloudflare_image import (
+    CloudflareImageError,
+    generate_image as cf_generate_image,
+)
 from agent.generators.gemini_image import (
     GeminiImageError,
     build_image_prompt,
@@ -40,6 +44,29 @@ class ImageOutcome:
 
 UnsplashFn = Callable[..., ImageResult]
 GeminiFn = Callable[..., bytes]
+CloudflareFn = Callable[..., bytes]
+
+
+def _try_cloudflare(
+    *,
+    post_type: str,
+    hook: str,
+    keywords: list[str],
+    account_id: str | None,
+    api_token: str | None,
+    cloudflare_fn: CloudflareFn,
+) -> bytes | None:
+    if not account_id or not api_token:
+        return None
+    prompt = build_image_prompt(post_type=post_type, hook=hook, keywords=keywords)
+    try:
+        return cloudflare_fn(prompt, account_id=account_id, api_token=api_token)
+    except CloudflareImageError as e:
+        log.warning("Cloudflare image failed: %s", e)
+        return None
+    except Exception as e:
+        log.warning("Cloudflare image unexpected error: %s", e)
+        return None
 
 
 def _try_gemini(
@@ -89,6 +116,40 @@ def _quote_card(hook: str) -> bytes:
     return render_quote_card(hook)
 
 
+def _ai_image_chain(
+    *,
+    post_type: str,
+    hook: str,
+    keywords: list[str],
+    cloudflare_account_id: str | None,
+    cloudflare_api_token: str | None,
+    cloudflare_fn: CloudflareFn,
+    gemini_api_key: str | None,
+    gemini_fn: GeminiFn,
+) -> tuple[bytes | None, str]:
+    """Run AI generators in order. Returns (bytes, strategy_name) or (None, '')."""
+    b = _try_cloudflare(
+        post_type=post_type,
+        hook=hook,
+        keywords=keywords,
+        account_id=cloudflare_account_id,
+        api_token=cloudflare_api_token,
+        cloudflare_fn=cloudflare_fn,
+    )
+    if b:
+        return b, "cloudflare"
+    b = _try_gemini(
+        post_type=post_type,
+        hook=hook,
+        keywords=keywords,
+        api_key=gemini_api_key,
+        gemini_fn=gemini_fn,
+    )
+    if b:
+        return b, "gemini"
+    return None, ""
+
+
 def pick_image(
     *,
     post_type: str,
@@ -98,28 +159,37 @@ def pick_image(
     language: str | None,
     gemini_api_key: str | None,
     unsplash_access_key: str | None,
+    cloudflare_account_id: str | None = None,
+    cloudflare_api_token: str | None = None,
     gemini_fn: GeminiFn = generate_image,
     unsplash_fn: UnsplashFn = fetch_image,
+    cloudflare_fn: CloudflareFn = cf_generate_image,
 ) -> ImageOutcome:
     """Run the per-type fallback chain. Always returns a usable outcome."""
 
-    gemini_first = {"trending", "concept", "news_take"}
+    ai_first = {"trending", "concept", "news_take"}
     code_first = {"tutorial", "project"}
     quote_first = {"roadmap"}
     unsplash_first = {"career"}
 
-    if post_type in gemini_first:
-        b = _try_gemini(
+    credit_for = {
+        "cloudflare": "Image: Cloudflare Workers AI (FLUX.1-schnell)",
+        "gemini": "Image: Gemini Imagen",
+    }
+
+    if post_type in ai_first:
+        b, strategy = _ai_image_chain(
             post_type=post_type,
             hook=hook,
             keywords=keywords,
-            api_key=gemini_api_key,
+            cloudflare_account_id=cloudflare_account_id,
+            cloudflare_api_token=cloudflare_api_token,
+            cloudflare_fn=cloudflare_fn,
+            gemini_api_key=gemini_api_key,
             gemini_fn=gemini_fn,
         )
         if b:
-            return ImageOutcome(
-                bytes_=b, url=None, credit="Image: Gemini Imagen", strategy="gemini"
-            )
+            return ImageOutcome(bytes_=b, url=None, credit=credit_for[strategy], strategy=strategy)
         un = _try_unsplash(
             keywords=keywords, access_key=unsplash_access_key, unsplash_fn=unsplash_fn
         )
@@ -133,18 +203,21 @@ def pick_image(
         b = _try_code_card(snippet, language)
         if b:
             return ImageOutcome(bytes_=b, url=None, credit="Generated code card", strategy="code")
-        # For tutorials try Gemini next; for project posts try Unsplash next.
+        # For tutorials try AI next; for project posts try Unsplash next.
         if post_type == "tutorial":
-            b2 = _try_gemini(
+            b2, strategy = _ai_image_chain(
                 post_type=post_type,
                 hook=hook,
                 keywords=keywords,
-                api_key=gemini_api_key,
+                cloudflare_account_id=cloudflare_account_id,
+                cloudflare_api_token=cloudflare_api_token,
+                cloudflare_fn=cloudflare_fn,
+                gemini_api_key=gemini_api_key,
                 gemini_fn=gemini_fn,
             )
             if b2:
                 return ImageOutcome(
-                    bytes_=b2, url=None, credit="Image: Gemini Imagen", strategy="gemini"
+                    bytes_=b2, url=None, credit=credit_for[strategy], strategy=strategy
                 )
         un = _try_unsplash(
             keywords=keywords, access_key=unsplash_access_key, unsplash_fn=unsplash_fn
@@ -156,8 +229,7 @@ def pick_image(
         )
 
     if post_type in quote_first:
-        # roadmap: prefer the on-brand quote card (looks like an infographic),
-        # then Gemini, then Unsplash.
+        # roadmap: prefer the on-brand quote card (looks like an infographic).
         b = _quote_card(hook)
         return ImageOutcome(bytes_=b, url=None, credit="Generated quote card", strategy="quote")
 
