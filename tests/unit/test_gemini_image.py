@@ -50,9 +50,7 @@ def test_generate_image_accepts_snake_case_inline_data() -> None:
             "candidates": [
                 {
                     "content": {
-                        "parts": [
-                            {"inline_data": {"mime_type": "image/png", "data": encoded}}
-                        ]
+                        "parts": [{"inline_data": {"mime_type": "image/png", "data": encoded}}]
                     }
                 }
             ]

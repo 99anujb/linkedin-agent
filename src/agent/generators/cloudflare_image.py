@@ -63,9 +63,7 @@ def generate_image(
         raise CloudflareImageError(f"Cloudflare image HTTP error: {e}") from e
 
     if resp.status_code >= 400:
-        raise CloudflareImageError(
-            f"Cloudflare image API {resp.status_code}: {resp.text[:300]}"
-        )
+        raise CloudflareImageError(f"Cloudflare image API {resp.status_code}: {resp.text[:300]}")
 
     try:
         payload = resp.json()

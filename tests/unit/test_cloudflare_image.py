@@ -45,9 +45,7 @@ def test_generate_image_raises_on_4xx() -> None:
 
 @respx.mock
 def test_generate_image_raises_on_success_false() -> None:
-    respx.post(_endpoint()).respond(
-        json={"success": False, "errors": [{"message": "bad model"}]}
-    )
+    respx.post(_endpoint()).respond(json={"success": False, "errors": [{"message": "bad model"}]})
     with pytest.raises(CloudflareImageError):
         generate_image("prompt", account_id="acct", api_token="tok")
 
