@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import logging
+from typing import Any
 
 import httpx
 
@@ -31,7 +32,7 @@ def _endpoint(model: str, api_key: str) -> str:
     return f"{API_BASE}/{model}:generateContent?key={api_key}"
 
 
-def _extract_image_bytes(payload: dict) -> bytes | None:
+def _extract_image_bytes(payload: dict[str, Any]) -> bytes | None:
     """Walk the response and return raw bytes from the first inlineData part."""
     for cand in payload.get("candidates") or []:
         for part in (cand.get("content") or {}).get("parts") or []:
